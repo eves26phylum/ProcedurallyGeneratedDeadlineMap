@@ -32,6 +32,7 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
             if getFromXY(x, y) < minSize then minSize = getFromXY(x, y) * partSize end
         end
     end
+    local minSizeVector3 = Vector3.new(0, minSize, 0)
     for x = 0, resolution.X - 1 do
         for y = 0, resolution.Y - 1 do
             local topLeftOffset = Vector2.new(0, 0)
@@ -42,10 +43,10 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
             local tRTotalH = getFromXY(x + topRightOffset.X, y + topRightOffset.Y)
             local bLTotalH = getFromXY(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
             local bRTotalH = getFromXY(x + bottomRightOffset.X, y + bottomRightOffset.Y)
-            local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3 - minSize
-            local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3 - minSize
-            local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3 - minSize
-            local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3 - minSize
+            local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3 - minSizeVector3
+            local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3 - minSizeVector3
+            local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3 - minSizeVector3
+            local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3 - minSizeVector3
             if (not wedges[x]) then wedges[x] = {} end
             wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, adapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, adapter)}, data={
                 vertices={topLeft,
