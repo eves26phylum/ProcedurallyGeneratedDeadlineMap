@@ -16,7 +16,7 @@ end
 
 function createTerrain:createTrianglesFromData(data, resolution, partSize, offsetVector3, adapter, materialiseTriangle, operateOnData)
     -- note: resolution can only be an integer. Being a float breaks the entire thing because it's an index
-    local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
+    local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self) -- NOTE: Convert this createTerrain to a meta table so we can stop using this shit and actually make a configurable thing.
     local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
 
     local function getFromXY(x, y)
