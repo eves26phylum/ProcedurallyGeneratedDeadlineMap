@@ -21,12 +21,13 @@ robloxAdapter:setProperty(wedgesFolder, "Parent", workspace)
 robloxAdapter:setProperty(wedgesFolder, "Name", "Wedges")
 
 local function operateOnThisTriangleInstance(data, thisTriangle)
+    local isSnow = data.data.averageHeight > 0.5
     robloxAdapter:setProperty(thisTriangle, "Parent", wedgesFolder)
-    robloxAdapter:setProperty(thisTriangle, "Color", Color3.fromRGB(237, 201, 175))
-    robloxAdapter:setProperty(thisTriangle, "Material", Enum.Material.Sand)
+    robloxAdapter:setProperty(thisTriangle, "Color", isSnow and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(237, 201, 175))
+    robloxAdapter:setProperty(thisTriangle, "Material", isSnow and Enum.Material.Snow or Enum.Material.Sand)
 end
 local startTime = os.clock()
-local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 500, 0), robloxAdapter, nil, function(thisData)
+local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 0, 0), robloxAdapter, nil, function(thisData)
     operateOnThisTriangleInstance(thisData, thisData[1][1])
     operateOnThisTriangleInstance(thisData, thisData[1][2])
     operateOnThisTriangleInstance(thisData, thisData[2][1])

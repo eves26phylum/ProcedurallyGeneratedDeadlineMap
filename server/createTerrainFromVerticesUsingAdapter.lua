@@ -26,10 +26,16 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
     local function multiplyVectorByPartSize(x, y, h)
         return Vector3.new(x * partSize, h * partSize, y * partSize)
     end
-    local minSize = math.huge
+    local minSize, maxSize = math.huge, -math.huge
     for x = 0, resolution.X - 1 do
         for y = 0, resolution.Y - 1 do
-            if getFromXY(x, y) < minSize then minSize = getFromXY(x, y) end
+            local computed_getFromXY_value = getFromXY(x, y)
+            if computed_getFromXY_value < minSize then 
+                minSize = computed_getFromXY_value
+            end
+            if computed_getFromXY_value > maxSize then
+                maxSize = computed_getFromXY_value
+            end
         end
     end
     local minSizeVector3 = Vector3.new(0, minSize * partSize, 0)
@@ -52,7 +58,7 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
                 vertices={topLeft,
                 topRight,
                 bottomLeft,
-                bottomRight}, averageHeight=getFromXY(x, y)
+                bottomRight}, averageHeight=getFromXY(x, y)/maxSize, averageHeightSized=getFromXY(x, y)
             }}
             if not operateOnData then continue end
             operateOnData(wedges[x][y])

@@ -14,7 +14,7 @@ function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacuna
     assert(octaves, "octaves is missing")
     assert(POWER, "POWER is missing")
     local offset = offset or Vector2.new(0, 0)
-    local noiseMap = {}
+    local noiseMap = table.create(resolution.X * resolution.Y)
     local minRaw, maxRaw = math.huge, -math.huge
     for x = 0, resolution.X do
         for y = 0, resolution.Y do

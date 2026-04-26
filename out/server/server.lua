@@ -68,7 +68,7 @@ function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacuna
     assert(octaves, "octaves is missing")
     assert(POWER, "POWER is missing")
     local offset = offset or Vector2.new(0, 0)
-    local noiseMap = {}
+    local noiseMap = table.create(resolution.X * resolution.Y)
     local minRaw, maxRaw = math.huge, -math.huge
     for x = 0, resolution.X do
         for y = 0, resolution.Y do
@@ -178,10 +178,16 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
     local function multiplyVectorByPartSize(x, y, h)
         return Vector3.new(x * partSize, h * partSize, y * partSize)
     end
-    local minSize = math.huge
+    local minSize, maxSize = math.huge, -math.huge
     for x = 0, resolution.X - 1 do
         for y = 0, resolution.Y - 1 do
-            if getFromXY(x, y) < minSize then minSize = getFromXY(x, y) end
+            local computed_getFromXY_value = getFromXY(x, y)
+            if computed_getFromXY_value < minSize then 
+                minSize = computed_getFromXY_value
+            end
+            if computed_getFromXY_value > maxSize then
+                maxSize = computed_getFromXY_value
+            end
         end
     end
     local minSizeVector3 = Vector3.new(0, minSize * partSize, 0)
@@ -204,7 +210,7 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
                 vertices={topLeft,
                 topRight,
                 bottomLeft,
-                bottomRight}, averageHeight=getFromXY(x, y)
+                bottomRight}, averageHeight=getFromXY(x, y)/maxSize, averageHeightSized=getFromXY(x, y)
             }}
             if not operateOnData then continue end
             operateOnData(wedges[x][y])
@@ -239,9 +245,10 @@ robloxAdapter:setProperty(wedgesFolder, "Parent", workspace)
 robloxAdapter:setProperty(wedgesFolder, "Name", "Wedges")
 
 local function operateOnThisTriangleInstance(data, thisTriangle)
+    local isSnow = data.data.averageHeight > 0.5
     robloxAdapter:setProperty(thisTriangle, "Parent", wedgesFolder)
-    robloxAdapter:setProperty(thisTriangle, "Color", Color3.fromRGB(237, 201, 175))
-    robloxAdapter:setProperty(thisTriangle, "Material", Enum.Material.Sand)
+    robloxAdapter:setProperty(thisTriangle, "Color", isSnow and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(237, 201, 175))
+    robloxAdapter:setProperty(thisTriangle, "Material", isSnow and Enum.Material.Snow or Enum.Material.Sand)
 end
 local startTime = os.clock()
 local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 0, 0), robloxAdapter, nil, function(thisData)
