@@ -219,7 +219,8 @@ for x, dataY in triangles do
         if not success then warn(result) end
     end
 end
-local randTrianglePickX = triangles[math.random(1, #triangles)]
+local randX = math.random(1, #triangles)
+local randTrianglePickX = triangles[randX]
 local randY = math.random(1, #randTrianglePickX)
 local randTrianglePickY = randTrianglePickX[randY]
 local pos = (randTrianglePickY.data.vertices[1] + randTrianglePickY.data.vertices[2]) / 2
@@ -227,7 +228,7 @@ local height = EgoMoose:getBarycentricHeight(randTrianglePickY.data.vertices[1],
 local newPart = robloxAdapter:newInstance("Part")
 robloxAdapter:setProperty(newPart, "Parent", workspace)
 robloxAdapter:setProperty(newPart, "Anchored", true)
-local dogCFrame = CFrame.new(Vector3.new(pos.X, height, pos.Z)) * triangles[randTrianglePickX][randTrianglePickY][1][1].CFrame.Rotation
+local dogCFrame = CFrame.new(Vector3.new(pos.X, height, pos.Z)) * triangles[randX][randY][1][1].CFrame.Rotation
 robloxAdapter:setProperty(newPart, "CFrame", dogCFrame)
 end
 
