@@ -181,10 +181,10 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
     local minSize = math.huge
     for x = 0, resolution.X - 1 do
         for y = 0, resolution.Y - 1 do
-            if getFromXY(x, y) < minSize then minSize = getFromXY(x, y) * partSize end
+            if getFromXY(x, y) < minSize then minSize = getFromXY(x, y) end
         end
     end
-    local minSizeVector3 = Vector3.new(0, minSize, 0)
+    local minSizeVector3 = Vector3.new(0, minSize * partSize, 0)
     for x = 0, resolution.X - 1 do
         for y = 0, resolution.Y - 1 do
             local topLeftOffset = Vector2.new(0, 0)
