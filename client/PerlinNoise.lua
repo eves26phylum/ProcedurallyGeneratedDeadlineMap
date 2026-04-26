@@ -30,7 +30,7 @@ function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacuna
                 local computed_noise = math.noise(FUCKROBLOX(sampleX), FUCKROBLOX(sampleY))
                 local clamped_noise = (computed_noise / 2 + 0.5)
                 noiseHeight += (clamped_noise * exaggeratedness) * amplitude
-                amplitude *= amplitude
+                amplitude *= persistence
                 frequency *= lacunarity
             end
             if noiseHeight < minRaw then minRaw = noiseHeight end
