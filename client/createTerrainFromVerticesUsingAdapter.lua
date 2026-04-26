@@ -1,7 +1,6 @@
 local createTerrain = {}
 local EgoMoose = import("EgoMoose")
 local Util = import("Util")
-local robloxAdapter = import("robloxAdapter")
 local selfProp = import("selfProp")
 
 function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
@@ -15,12 +14,17 @@ function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
     return WedgeA, WedgeB
 end
 
-function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, materialiseTriangle)
+function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, materialiseTriangle, adapter)
     local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
     local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
+    local minRaw = math.huge
+    for i = 1, #data do
+        if data[i] < minRaw then minRaw = data[i] end
+    end
 
     local function getHeight(x, y)
-        return data[x * (resolution.Y + 1) + y + 1]
+        local raw = data[x * (resolution.Y + 1) + y + 1]
+        return minRaw + (raw - minRaw) * exaggeratedness
     end
 
     local function multiplyVectorByPartSize(x, y, h)
@@ -33,8 +37,8 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, exagg
             local topRightOffset = Vector2.new(1, 0)
             local bottomLeftOffset = Vector2.new(0, 1)
             local bottomRightOffset = Vector2.new(1, 1)
-            local tLTotalH = getHeight(x + topLeftOffset.X, y + topLeftOffset.Y) * exaggeratedness
-            local tRTotalH = getHeight(x + topRightOffset.X, y + topRightOffset.Y) * exaggeratedness
+            local tLTotalH = getHeight(x + topLeftOffset.X, y + topLeftOffset.Y)
+            local tRTotalH = getHeight(x + topRightOffset.X, y + topRightOffset.Y)
             local bLTotalH = getHeight(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
             local bRTotalH = getHeight(x + bottomRightOffset.X, y + bottomRightOffset.Y)
             local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3
@@ -42,7 +46,7 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, exagg
             local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3
             local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3
             if (not wedges[x]) then wedges[x] = {} end
-            wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, robloxAdapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, robloxAdapter)}}
+            wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, adapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, adapter)}}
         end
     end
 

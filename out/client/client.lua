@@ -119,10 +119,9 @@ function modules.EgoMoose()
     return EgoMoose
 end
 function modules.createTerrainFromVerticesUsingAdapter()
-   local createTerrain = {}
+    local createTerrain = {}
     local EgoMoose = import("EgoMoose")
     local Util = import("Util")
-    local robloxAdapter = import("robloxAdapter")
     local selfProp = import("selfProp")
 
     function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
@@ -136,12 +135,17 @@ function modules.createTerrainFromVerticesUsingAdapter()
         return WedgeA, WedgeB
     end
 
-    function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, materialiseTriangle)
+    function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, materialiseTriangle, adapter)
         local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
         local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
+        local minRaw = math.huge
+        for i = 1, #data do
+            if data[i] < minRaw then minRaw = data[i] end
+        end
 
         local function getHeight(x, y)
-            return data[x * (resolution.Y + 1) + y + 1]
+            local raw = data[x * (resolution.Y + 1) + y + 1]
+            return minRaw + (raw - minRaw) * exaggeratedness
         end
 
         local function multiplyVectorByPartSize(x, y, h)
@@ -154,8 +158,8 @@ function modules.createTerrainFromVerticesUsingAdapter()
                 local topRightOffset = Vector2.new(1, 0)
                 local bottomLeftOffset = Vector2.new(0, 1)
                 local bottomRightOffset = Vector2.new(1, 1)
-                local tLTotalH = getHeight(x + topLeftOffset.X, y + topLeftOffset.Y) * exaggeratedness
-                local tRTotalH = getHeight(x + topRightOffset.X, y + topRightOffset.Y) * exaggeratedness
+                local tLTotalH = getHeight(x + topLeftOffset.X, y + topLeftOffset.Y)
+                local tRTotalH = getHeight(x + topRightOffset.X, y + topRightOffset.Y)
                 local bLTotalH = getHeight(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
                 local bRTotalH = getHeight(x + bottomRightOffset.X, y + bottomRightOffset.Y)
                 local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3
@@ -163,7 +167,7 @@ function modules.createTerrainFromVerticesUsingAdapter()
                 local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3
                 local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3
                 if (not wedges[x]) then wedges[x] = {} end
-                wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, robloxAdapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, robloxAdapter)}}
+                wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, adapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, adapter)}}
             end
         end
 
@@ -178,7 +182,7 @@ local robloxAdapter = import("robloxAdapter")
 local resolution = Vector2.new(20, 20)
 local noised = perlinNoise:generate(20, resolution)
 local startTime = os.clock()
-local triangles = createTerrain:createTrianglesFromData(noised, resolution, 5, 5, Vector3.new(0, 0, 0))
+local triangles = createTerrain:createTrianglesFromData(noised, resolution, 5, 5, Vector3.new(0, 0, 0), robloxAdapter)
 local endTime = os.clock()
 print(startTime, endTime, endTime - startTime)
 local wedgesFolder = robloxAdapter:findFirstChild(workspace, "Wedges")
@@ -191,10 +195,10 @@ robloxAdapter:setProperty(wedgesFolder, "Name", "Wedges")
 for x, dataY in triangles do
     for y, data in dataY do
         local success, result = pcall(function()
-            data[1][1].Parent = workspace
-            data[1][2].Parent = workspace
-            data[2][1].Parent = workspace
-            data[2][2].Parent = workspace
+            data[1][1].Parent = wedgesFolder
+            data[1][2].Parent = wedgesFolder
+            data[2][1].Parent = wedgesFolder
+            data[2][2].Parent = wedgesFolder
         end)
         if not success then warn(result) end
     end
