@@ -4,7 +4,12 @@ local robloxAdapter = import("robloxAdapter")
 local EgoMoose = import("EgoMoose")
 local partSize = 30
 local resolution = Vector2.new(math.round(2000 / partSize), math.round(2000 / partSize))
-local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / 6, resolution, Vector2.new(math.random(1, 10e6), math.random(1, 10e6)), 20, 2, 3)
+local lacunarity = 2
+local persistence = 0.1
+local octaves = 4
+local exaggeratedness
+local offset = Vector2.new(math.random(1, 10e6), math.random(1, 10e6))
+local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / 6, resolution, offset, exaggeratedness, lacunarity, persistence, octaves)
 local startTime = os.clock()
 local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 0, 0), robloxAdapter)
 local endTime = os.clock()
