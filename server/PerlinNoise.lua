@@ -40,13 +40,13 @@ function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacuna
             table.insert(noiseMap, endHeight)
         end
     end
-    local index = 0
-    for x = 0, resolution.X do
-        for y = 0, resolution.Y do
-            index += 1
-            noiseMap[index] = noiseMap[index] - (maxRaw + minRaw) / 2
-        end
-    end
+    -- local index = 0
+    -- for x = 0, resolution.X do
+    --     for y = 0, resolution.Y do
+    --         index += 1
+    --         noiseMap[index] = noiseMap[index]
+    --     end
+    -- end
     return noiseMap
 end
 

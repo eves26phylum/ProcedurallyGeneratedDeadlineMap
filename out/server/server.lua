@@ -52,59 +52,59 @@ function modules.robloxAdapter()
     return robloxAdapter
 end
 function modules.PerlinNoise()
-    local perlinNoise = {}
-    local function FUCKROBLOX(a)
-        if math.floor(a) == a then
-            return a + 0.001
-        end
-        return a
+local perlinNoise = {}
+local function FUCKROBLOX(a)
+    if math.floor(a) == a then
+        return a + 0.001
     end
-    function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacunarity, persistence, octaves, POWER)
-        assert(scale, "scale is missing")
-        assert(resolution, "resolution is missing")
-        assert(exaggeratedness, "exaggeratedness is missing")
-        assert(lacunarity, "lacunarity is missing")
-        assert(persistence, "persistence is missing")
-        assert(octaves, "octaves is missing")
-        assert(POWER, "POWER is missing")
-        local offset = offset or Vector2.new(0, 0)
-        local noiseMap = {}
-        local minRaw, maxRaw = math.huge, -math.huge
-        for x = 0, resolution.X do
-            for y = 0, resolution.Y do
-                local offsetX = x + offset.X
-                local offsetY = y + offset.Y
+    return a
+end
+function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacunarity, persistence, octaves, POWER)
+    assert(scale, "scale is missing")
+    assert(resolution, "resolution is missing")
+    assert(exaggeratedness, "exaggeratedness is missing")
+    assert(lacunarity, "lacunarity is missing")
+    assert(persistence, "persistence is missing")
+    assert(octaves, "octaves is missing")
+    assert(POWER, "POWER is missing")
+    local offset = offset or Vector2.new(0, 0)
+    local noiseMap = {}
+    local minRaw, maxRaw = math.huge, -math.huge
+    for x = 0, resolution.X do
+        for y = 0, resolution.Y do
+            local offsetX = x + offset.X
+            local offsetY = y + offset.Y
 
-                local frequency = 1
-                local amplitude = 1
-                local noiseHeight = 0
+            local frequency = 1
+            local amplitude = 1
+            local noiseHeight = 0
 
-                for i = 1, octaves do
-                    local sampleX = offsetX / scale * frequency
-                    local sampleY = offsetY / scale * frequency
-                    local computed_noise = math.noise(FUCKROBLOX(sampleX), FUCKROBLOX(sampleY))
-                    local clamped_noise = (computed_noise / 2 + 0.5)
-                    noiseHeight += clamped_noise * amplitude
-                    amplitude *= persistence
-                    frequency *= lacunarity
-                end
-                local endHeight = (noiseHeight ^ POWER) * exaggeratedness
-                if endHeight < minRaw then minRaw = endHeight end
-                if endHeight > maxRaw then maxRaw = endHeight end
-                table.insert(noiseMap, endHeight)
+            for i = 1, octaves do
+                local sampleX = offsetX / scale * frequency
+                local sampleY = offsetY / scale * frequency
+                local computed_noise = math.noise(FUCKROBLOX(sampleX), FUCKROBLOX(sampleY))
+                local clamped_noise = (computed_noise / 2 + 0.5)
+                noiseHeight += clamped_noise * amplitude
+                amplitude *= persistence
+                frequency *= lacunarity
             end
+            local endHeight = (noiseHeight ^ POWER) * exaggeratedness
+            if endHeight < minRaw then minRaw = endHeight end
+            if endHeight > maxRaw then maxRaw = endHeight end
+            table.insert(noiseMap, endHeight)
         end
-        local index = 0
-        for x = 0, resolution.X do
-            for y = 0, resolution.Y do
-                index += 1
-                noiseMap[index] = noiseMap[index] - (maxRaw + minRaw) / 2
-            end
-        end
-        return noiseMap
     end
+    -- local index = 0
+    -- for x = 0, resolution.X do
+    --     for y = 0, resolution.Y do
+    --         index += 1
+    --         noiseMap[index] = noiseMap[index]
+    --     end
+    -- end
+    return noiseMap
+end
 
-    return perlinNoise
+return perlinNoise
 end
 function modules.EgoMoose()
 -- thanks from EgoMoose
@@ -178,7 +178,12 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
     local function multiplyVectorByPartSize(x, y, h)
         return Vector3.new(x * partSize, h * partSize, y * partSize)
     end
-
+    local minSize = math.huge
+    for x = 0, resolution.X - 1 do
+        for y = 0, resolution.Y - 1 do
+            if getFromXY(x, y) < minSize then minSize = getFromXY(x, y) * partSize end
+        end
+    end
     for x = 0, resolution.X - 1 do
         for y = 0, resolution.Y - 1 do
             local topLeftOffset = Vector2.new(0, 0)
@@ -189,10 +194,10 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
             local tRTotalH = getFromXY(x + topRightOffset.X, y + topRightOffset.Y)
             local bLTotalH = getFromXY(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
             local bRTotalH = getFromXY(x + bottomRightOffset.X, y + bottomRightOffset.Y)
-            local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3
-            local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3
-            local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3
-            local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3
+            local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3 - minSize
+            local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3 - minSize
+            local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3 - minSize
+            local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3 - minSize
             if (not wedges[x]) then wedges[x] = {} end
             wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, adapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, adapter)}, data={
                 vertices={topLeft,
@@ -204,7 +209,6 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
             operateOnData(wedges[x][y])
         end
     end
-
     return wedges
 end
 return createTerrain
@@ -239,7 +243,7 @@ local function operateOnThisTriangleInstance(data, thisTriangle)
     robloxAdapter:setProperty(thisTriangle, "Material", Enum.Material.Sand)
 end
 local startTime = os.clock()
-local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 500, 0), robloxAdapter, nil, function(thisData)
+local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 0, 0), robloxAdapter, nil, function(thisData)
     operateOnThisTriangleInstance(thisData, thisData[1][1])
     operateOnThisTriangleInstance(thisData, thisData[1][2])
     operateOnThisTriangleInstance(thisData, thisData[2][1])

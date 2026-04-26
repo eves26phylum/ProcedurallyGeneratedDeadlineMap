@@ -26,7 +26,12 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
     local function multiplyVectorByPartSize(x, y, h)
         return Vector3.new(x * partSize, h * partSize, y * partSize)
     end
-
+    local minSize = math.huge
+    for x = 0, resolution.X - 1 do
+        for y = 0, resolution.Y - 1 do
+            if getFromXY(x, y) < minSize then minSize = getFromXY(x, y) * partSize end
+        end
+    end
     for x = 0, resolution.X - 1 do
         for y = 0, resolution.Y - 1 do
             local topLeftOffset = Vector2.new(0, 0)
@@ -37,10 +42,10 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
             local tRTotalH = getFromXY(x + topRightOffset.X, y + topRightOffset.Y)
             local bLTotalH = getFromXY(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
             local bRTotalH = getFromXY(x + bottomRightOffset.X, y + bottomRightOffset.Y)
-            local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3
-            local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3
-            local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3
-            local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3
+            local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3 - minSize
+            local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3 - minSize
+            local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3 - minSize
+            local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3 - minSize
             if (not wedges[x]) then wedges[x] = {} end
             wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, adapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, adapter)}, data={
                 vertices={topLeft,
@@ -52,7 +57,6 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
             operateOnData(wedges[x][y])
         end
     end
-
     return wedges
 end
 return createTerrain
