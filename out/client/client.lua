@@ -150,8 +150,11 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, exagg
         if data[i] < minRaw then minRaw = data[i] end
     end
 
+    local function getFromXY(x, y)
+        return data[x * (resolution.Y + 1) + y + 1]
+    end
     local function getHeight(x, y)
-        local raw = data[x * (resolution.Y + 1) + y + 1]
+        local raw = getFromXY(x, y)
         return minRaw + (raw - minRaw) * exaggeratedness
     end
 
@@ -178,7 +181,7 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, exagg
                 vertices={topLeft,
                 topRight,
                 bottomLeft,
-                bottomRight}
+                bottomRight}, averageHeight=getFromXY(x, y)
             }}
         end
     end
@@ -194,9 +197,8 @@ local createTerrain = import("createTerrainFromVerticesUsingAdapter")
 local robloxAdapter = import("robloxAdapter")
 local EgoMoose = import("EgoMoose")
 local partSize = 30
-local resolution = Vector2.new(math.round(1000 / partSize), math.round(1000 / partSize))
-local maxxedResolution = math.max(resolution.X, resolution.Y)
-local noised = perlinNoise:generate(maxxedResolution * 0.25, resolution)
+local resolution = Vector2.new(math.round(2000 / partSize), math.round(2000 / partSize))
+local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / 6, resolution)
 local startTime = os.clock()
 local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, 20, Vector3.new(0, 0, 0), robloxAdapter)
 local endTime = os.clock()

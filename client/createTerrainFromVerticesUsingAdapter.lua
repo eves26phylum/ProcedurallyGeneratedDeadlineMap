@@ -23,8 +23,11 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, exagg
         if data[i] < minRaw then minRaw = data[i] end
     end
 
+    local function getFromXY(x, y)
+        return data[x * (resolution.Y + 1) + y + 1]
+    end
     local function getHeight(x, y)
-        local raw = data[x * (resolution.Y + 1) + y + 1]
+        local raw = getFromXY(x, y)
         return minRaw + (raw - minRaw) * exaggeratedness
     end
 
@@ -51,7 +54,7 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, exagg
                 vertices={topLeft,
                 topRight,
                 bottomLeft,
-                bottomRight}
+                bottomRight}, averageHeight=getFromXY(x, y)
             }}
         end
     end
