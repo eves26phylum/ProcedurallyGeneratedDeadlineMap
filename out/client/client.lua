@@ -135,7 +135,7 @@ function modules.createTerrainFromVerticesUsingAdapter()
         return WedgeA, WedgeB
     end
 
-    function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, materialiseTriangle, adapter)
+    function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, adapter, materialiseTriangle)
         local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
         local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
         local minRaw = math.huge
@@ -176,13 +176,14 @@ function modules.createTerrainFromVerticesUsingAdapter()
     return createTerrain
 end
 
+do
 local perlinNoise = import("PerlinNoise")
 local createTerrain = import("createTerrainFromVerticesUsingAdapter")
 local robloxAdapter = import("robloxAdapter")
-local resolution = Vector2.new(20, 20)
-local noised = perlinNoise:generate(20, resolution)
+local resolution = Vector2.new(50, 50)
+local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) * 0.25, resolution)
 local startTime = os.clock()
-local triangles = createTerrain:createTrianglesFromData(noised, resolution, 5, 5, Vector3.new(0, 0, 0), robloxAdapter)
+local triangles = createTerrain:createTrianglesFromData(noised, resolution, 5, 20, Vector3.new(0, 0, 0), robloxAdapter)
 local endTime = os.clock()
 print(startTime, endTime, endTime - startTime)
 local wedgesFolder = robloxAdapter:findFirstChild(workspace, "Wedges")
@@ -203,3 +204,6 @@ for x, dataY in triangles do
         if not success then warn(result) end
     end
 end
+end
+
+-- FILE IS LOCKED
