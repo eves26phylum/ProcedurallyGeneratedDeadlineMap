@@ -18,12 +18,9 @@ function modules.Util()
     function Object:assign(a, b, optionalFunc)
         assert(a, "A is missing")
         assert(b, "B is missing")
+        local optionalFunc = optionalFunc or function(a, index, value) a[index] = value end
         for index, value in b do
-            if optionalFunc then
-                optionalFunc(a, index, value)
-                continue
-            end
-            a[index] = value
+            optionalFunc(a, index, value)
         end
     end
 
@@ -162,8 +159,8 @@ function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
     local AData, BData = EgoMoose:draw3dTriangle(a, b, c) -- a, b, c
     local WedgeA = adapter:newInstance("WedgePart")
     local WedgeB = adapter:newInstance("WedgePart")
-    WedgeA.Anchored = true
-    WedgeB.Anchored = true
+    adapter:setProperty(WedgeA, "Anchored", true)
+    adapter:setProperty(WedgeB, "Anchored", true)
     Util:assign(WedgeA, AData, selfProp:returnFunctionWithIdentity(adapter.setProperty, adapter))
     Util:assign(WedgeB, BData, selfProp:returnFunctionWithIdentity(adapter.setProperty, adapter))
     return WedgeA, WedgeB
@@ -228,30 +225,39 @@ local roughness = 4
 local POWER = 3
 local offset = Vector2.new(math.random(1, 10e6), math.random(1, 10e6))
 local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / roughness, resolution, offset, exaggeratedness, lacunarity, persistence, octaves, POWER)
-local startTime = os.clock()
-local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 0, 0), robloxAdapter)
-local endTime = os.clock()
-
-print(startTime, endTime, endTime - startTime)
-
 local wedgesFolder = robloxAdapter:findFirstChild(workspace, "Wedges")
 if wedgesFolder then
     robloxAdapter:destroy(wedgesFolder)
 end
-
 local wedgesFolder = robloxAdapter:newInstance("Folder")
 robloxAdapter:setProperty(wedgesFolder, "Parent", workspace)
 robloxAdapter:setProperty(wedgesFolder, "Name", "Wedges")
 
-for x, dataY in triangles do
-for y, data in dataY do
-        data[1][1].Parent = wedgesFolder
-        data[1][2].Parent = wedgesFolder
-        data[2][1].Parent = wedgesFolder
-        data[2][2].Parent = wedgesFolder
-        -- data.data
-    end
+local function operateOnThisTriangleInstance(data, thisTriangle)
+    robloxAdapter:setProperty(thisTriangle, "Parent", wedgesFolder)
+    robloxAdapter:setProperty(thisTriangle, "Color", Color3.fromRGB(237, 201, 175))
+    robloxAdapter:setProperty(thisTriangle, "Material", Enum.Material.Sand)
 end
+local startTime = os.clock()
+local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 500, 0), robloxAdapter, nil, function(thisData)
+    operateOnThisTriangleInstance(thisData, thisData[1][1])
+    operateOnThisTriangleInstance(thisData, thisData[1][2])
+    operateOnThisTriangleInstance(thisData, thisData[2][1])
+    operateOnThisTriangleInstance(thisData, thisData[2][2])
+end)
+local endTime = os.clock()
+
+print(startTime, endTime, endTime - startTime)
+
+-- for x, dataY in triangles do
+-- for y, data in dataY do
+--         data[1][1].Parent = wedgesFolder
+--         data[1][2].Parent = wedgesFolder
+--         data[2][1].Parent = wedgesFolder
+--         data[2][2].Parent = wedgesFolder
+--         -- data.data
+--     end
+-- end
 end
 
 -- FILE IS LOCKED

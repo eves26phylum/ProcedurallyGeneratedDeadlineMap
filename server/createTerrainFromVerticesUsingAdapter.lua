@@ -7,8 +7,8 @@ function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
     local AData, BData = EgoMoose:draw3dTriangle(a, b, c) -- a, b, c
     local WedgeA = adapter:newInstance("WedgePart")
     local WedgeB = adapter:newInstance("WedgePart")
-    WedgeA.Anchored = true
-    WedgeB.Anchored = true
+    adapter:setProperty(WedgeA, "Anchored", true)
+    adapter:setProperty(WedgeB, "Anchored", true)
     Util:assign(WedgeA, AData, selfProp:returnFunctionWithIdentity(adapter.setProperty, adapter))
     Util:assign(WedgeB, BData, selfProp:returnFunctionWithIdentity(adapter.setProperty, adapter))
     return WedgeA, WedgeB
