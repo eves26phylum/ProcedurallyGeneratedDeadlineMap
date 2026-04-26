@@ -5,13 +5,14 @@ local function FUCKROBLOX(a)
     end
     return a
 end
-function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacunarity, persistence, octaves)
+function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacunarity, persistence, octaves, POWER)
     assert(scale, "scale is missing")
     assert(resolution, "resolution is missing")
     assert(exaggeratedness, "exaggeratedness is missing")
     assert(lacunarity, "lacunarity is missing")
     assert(persistence, "persistence is missing")
     assert(octaves, "octaves is missing")
+    assert(POWER, "POWER is missing")
     local offset = offset or Vector2.new(0, 0)
     local noiseMap = {}
     local minRaw, maxRaw = math.huge, -math.huge
@@ -29,13 +30,14 @@ function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacuna
                 local sampleY = offsetY / scale * frequency
                 local computed_noise = math.noise(FUCKROBLOX(sampleX), FUCKROBLOX(sampleY))
                 local clamped_noise = (computed_noise / 2 + 0.5)
-                noiseHeight += (clamped_noise * exaggeratedness) * amplitude
+                noiseHeight += clamped_noise * amplitude
                 amplitude *= persistence
                 frequency *= lacunarity
             end
-            if noiseHeight < minRaw then minRaw = noiseHeight end
-            if noiseHeight > maxRaw then maxRaw = noiseHeight end
-            table.insert(noiseMap, noiseHeight)
+            local endHeight = (noiseHeight ^ POWER) * exaggeratedness
+            if endHeight < minRaw then minRaw = endHeight end
+            if endHeight > maxRaw then maxRaw = endHeight end
+            table.insert(noiseMap, endHeight)
         end
     end
     local index = 0

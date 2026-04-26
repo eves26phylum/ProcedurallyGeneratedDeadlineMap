@@ -55,20 +55,21 @@ function modules.robloxAdapter()
     return robloxAdapter
 end
 function modules.PerlinNoise()
-local perlinNoise = {}
+    local perlinNoise = {}
     local function FUCKROBLOX(a)
         if math.floor(a) == a then
             return a + 0.001
         end
         return a
     end
-    function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacunarity, persistence, octaves)
+    function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacunarity, persistence, octaves, POWER)
         assert(scale, "scale is missing")
         assert(resolution, "resolution is missing")
         assert(exaggeratedness, "exaggeratedness is missing")
         assert(lacunarity, "lacunarity is missing")
         assert(persistence, "persistence is missing")
         assert(octaves, "octaves is missing")
+        assert(POWER, "POWER is missing")
         local offset = offset or Vector2.new(0, 0)
         local noiseMap = {}
         local minRaw, maxRaw = math.huge, -math.huge
@@ -86,13 +87,14 @@ local perlinNoise = {}
                     local sampleY = offsetY / scale * frequency
                     local computed_noise = math.noise(FUCKROBLOX(sampleX), FUCKROBLOX(sampleY))
                     local clamped_noise = (computed_noise / 2 + 0.5)
-                    noiseHeight += (clamped_noise * exaggeratedness) * amplitude
+                    noiseHeight += clamped_noise * amplitude
                     amplitude *= persistence
                     frequency *= lacunarity
                 end
-                if noiseHeight < minRaw then minRaw = noiseHeight end
-                if noiseHeight > maxRaw then maxRaw = noiseHeight end
-                table.insert(noiseMap, noiseHeight)
+                local endHeight = (noiseHeight ^ POWER) * exaggeratedness
+                if endHeight < minRaw then minRaw = endHeight end
+                if endHeight > maxRaw then maxRaw = endHeight end
+                table.insert(noiseMap, endHeight)
             end
         end
         local index = 0
@@ -217,12 +219,13 @@ do
     local partSize = 50
     local resolution = Vector2.new(math.round(10000 / partSize), math.round(10000 / partSize))
     local lacunarity = 10
-    local persistence = 0.5
-    local octaves = 10
+    local persistence = 0.25
+    local octaves = 2
     local exaggeratedness = 20
     local roughness = 2.5
+    local POWER = 2
     local offset = Vector2.new(math.random(1, 10e6), math.random(1, 10e6))
-    local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / roughness, resolution, offset, exaggeratedness, lacunarity, persistence, octaves)
+    local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / roughness, resolution, offset, exaggeratedness, lacunarity, persistence, octaves, POWER)
     local startTime = os.clock()
     local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 0, 0), robloxAdapter)
     local endTime = os.clock()
