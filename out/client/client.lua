@@ -226,7 +226,7 @@ local height = EgoMoose:getBarycentricHeight(randTrianglePickY.data.vertices[1],
 local newPart = robloxAdapter:newInstance("Part")
 robloxAdapter:setProperty(newPart, "Parent", workspace)
 robloxAdapter:setProperty(newPart, "Anchored", true)
-local dogCFrame = CFrame.new(Vector3.new(pos.X, height, pos.Z)) * data[randTrianglePickX][randTrianglePickY][1][1].CFrame.Rotation
+local dogCFrame = CFrame.new(Vector3.new(pos.X, height, pos.Z)) * triangles[randTrianglePickX][randTrianglePickY][1][1].CFrame.Rotation
 robloxAdapter:setProperty(newPart, "CFrame", dogCFrame)
 end
 
