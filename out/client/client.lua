@@ -214,11 +214,11 @@ do
     local createTerrain = import("createTerrainFromVerticesUsingAdapter")
     local robloxAdapter = import("robloxAdapter")
     local EgoMoose = import("EgoMoose")
-    local partSize = 30
-    local resolution = Vector2.new(math.round(2000 / partSize), math.round(2000 / partSize))
-    local lacunarity = 2
-    local persistence = 0.2
-    local octaves = 3
+    local partSize = 50
+    local resolution = Vector2.new(math.round(10000 / partSize), math.round(10000 / partSize))
+    local lacunarity = 10
+    local persistence = 0.5
+    local octaves = 10
     local exaggeratedness = 20
     local roughness = 2.5
     local offset = Vector2.new(math.random(1, 10e6), math.random(1, 10e6))
@@ -239,15 +239,12 @@ do
     robloxAdapter:setProperty(wedgesFolder, "Name", "Wedges")
 
     for x, dataY in triangles do
-        for y, data in dataY do
-            local success, result = pcall(function()
-                data[1][1].Parent = wedgesFolder
-                data[1][2].Parent = wedgesFolder
-                data[2][1].Parent = wedgesFolder
-                data[2][2].Parent = wedgesFolder
-            end)
+    for y, data in dataY do
+            data[1][1].Parent = wedgesFolder
+            data[1][2].Parent = wedgesFolder
+            data[2][1].Parent = wedgesFolder
+            data[2][2].Parent = wedgesFolder
             -- data.data
-            if not success then warn(result) end
         end
     end
 end
