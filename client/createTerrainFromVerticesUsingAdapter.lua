@@ -14,21 +14,13 @@ function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
     return WedgeA, WedgeB
 end
 
-function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, adapter, materialiseTriangle)
+function createTerrain:createTrianglesFromData(data, resolution, partSize, offsetVector3, adapter, materialiseTriangle)
     -- note: resolution can only be an integer. Being a float breaks the entire thing because it's an index
     local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
     local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
-    local minRaw = math.huge
-    for i = 1, #data do
-        if data[i] < minRaw then minRaw = data[i] end
-    end
 
     local function getFromXY(x, y)
         return data[x * (resolution.Y + 1) + y + 1]
-    end
-    local function getHeight(x, y)
-        local raw = getFromXY(x, y)
-        return minRaw + (raw - minRaw) * exaggeratedness
     end
 
     local function multiplyVectorByPartSize(x, y, h)
@@ -41,10 +33,10 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, exagg
             local topRightOffset = Vector2.new(1, 0)
             local bottomLeftOffset = Vector2.new(0, 1)
             local bottomRightOffset = Vector2.new(1, 1)
-            local tLTotalH = getHeight(x + topLeftOffset.X, y + topLeftOffset.Y)
-            local tRTotalH = getHeight(x + topRightOffset.X, y + topRightOffset.Y)
-            local bLTotalH = getHeight(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
-            local bRTotalH = getHeight(x + bottomRightOffset.X, y + bottomRightOffset.Y)
+            local tLTotalH = getFromXY(x + topLeftOffset.X, y + topLeftOffset.Y)
+            local tRTotalH = getFromXY(x + topRightOffset.X, y + topRightOffset.Y)
+            local bLTotalH = getFromXY(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
+            local bRTotalH = getFromXY(x + bottomRightOffset.X, y + bottomRightOffset.Y)
             local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3
             local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3
             local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3

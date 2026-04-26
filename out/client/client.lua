@@ -62,21 +62,45 @@ function modules.PerlinNoise()
         end
         return a
     end
-    function perlinNoise:generate(scale, resolution, offset)
+    function perlinNoise:generate(scale, resolution, offset, exaggeratedness, lacunarity, octaves)
         assert(scale, "scale is missing")
         assert(resolution, "resolution is missing")
+        assert(exaggeratedness, "exaggeratedness is missing")
+        assert(lacunarity, "lacunarity is missing")
+        assert(octaves, "octaves is missing")
         local offset = offset or Vector2.new(0, 0)
-        local resultArray = {}
+        local noiseMap = {}
+        local minRaw, maxRaw = math.huge, -math.huge
         for x = 0, resolution.X do
             for y = 0, resolution.Y do
                 local offsetX = x + offset.X
                 local offsetY = y + offset.Y
-                local computed_noise = math.noise(FUCKROBLOX(offsetX / scale), FUCKROBLOX(offsetY / scale))
-                local clamped_noise = (computed_noise / 2 + 0.5)
-                table.insert(resultArray, clamped_noise)
+
+                local frequency = 1;
+                local noiseHeight = 0;
+
+                for i = 1, octaves do
+                    local sampleX = offsetX / scale * frequency
+                    local sampleY = offsetY / scale * frequency
+                    local computed_noise = math.noise(FUCKROBLOX(sampleX), FUCKROBLOX(sampleY))
+                    local clamped_noise = (computed_noise / 2 + 0.5)
+                    noiseHeight += clamped_noise * exaggeratedness
+                    frequency *= lacunarity
+                end
+                if noiseHeight < minRaw then minRaw = noiseHeight end
+                if noiseHeight > maxRaw then maxRaw = noiseHeight end
+                table.insert(noiseMap, noiseHeight)
             end
         end
-        return resultArray
+        local index = 0
+        for x = 0, resolution.X do
+            for y = 0, resolution.Y do
+                index += 1
+                noiseMap[index] -= maxRaw / 4
+                -- i have no idea what the fuck i did here, but if it works it works
+            end
+        end
+        return noiseMap
     end
 
     return perlinNoise
@@ -141,21 +165,13 @@ function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
     return WedgeA, WedgeB
 end
 
-function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, adapter, materialiseTriangle)
+function createTerrain:createTrianglesFromData(data, resolution, partSize, offsetVector3, adapter, materialiseTriangle)
     -- note: resolution can only be an integer. Being a float breaks the entire thing because it's an index
     local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
     local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
-    local minRaw = math.huge
-    for i = 1, #data do
-        if data[i] < minRaw then minRaw = data[i] end
-    end
 
     local function getFromXY(x, y)
         return data[x * (resolution.Y + 1) + y + 1]
-    end
-    local function getHeight(x, y)
-        local raw = getFromXY(x, y)
-        return minRaw + (raw - minRaw) * exaggeratedness
     end
 
     local function multiplyVectorByPartSize(x, y, h)
@@ -168,10 +184,10 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, exagg
             local topRightOffset = Vector2.new(1, 0)
             local bottomLeftOffset = Vector2.new(0, 1)
             local bottomRightOffset = Vector2.new(1, 1)
-            local tLTotalH = getHeight(x + topLeftOffset.X, y + topLeftOffset.Y)
-            local tRTotalH = getHeight(x + topRightOffset.X, y + topRightOffset.Y)
-            local bLTotalH = getHeight(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
-            local bRTotalH = getHeight(x + bottomRightOffset.X, y + bottomRightOffset.Y)
+            local tLTotalH = getFromXY(x + topLeftOffset.X, y + topLeftOffset.Y)
+            local tRTotalH = getFromXY(x + topRightOffset.X, y + topRightOffset.Y)
+            local bLTotalH = getFromXY(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
+            local bRTotalH = getFromXY(x + bottomRightOffset.X, y + bottomRightOffset.Y)
             local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3
             local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3
             local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3
@@ -198,18 +214,22 @@ local robloxAdapter = import("robloxAdapter")
 local EgoMoose = import("EgoMoose")
 local partSize = 30
 local resolution = Vector2.new(math.round(2000 / partSize), math.round(2000 / partSize))
-local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / 6, resolution)
+local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / 6, resolution, Vector2.new(math.random(1, 10e6), math.random(1, 10e6)), 20, 2, 3)
 local startTime = os.clock()
-local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, 20, Vector3.new(0, 0, 0), robloxAdapter)
+local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 0, 0), robloxAdapter)
 local endTime = os.clock()
+
 print(startTime, endTime, endTime - startTime)
+
 local wedgesFolder = robloxAdapter:findFirstChild(workspace, "Wedges")
 if wedgesFolder then
     robloxAdapter:destroy(wedgesFolder)
 end
+
 local wedgesFolder = robloxAdapter:newInstance("Folder")
 robloxAdapter:setProperty(wedgesFolder, "Parent", workspace)
 robloxAdapter:setProperty(wedgesFolder, "Name", "Wedges")
+
 for x, dataY in triangles do
     for y, data in dataY do
         local success, result = pcall(function()
@@ -218,21 +238,10 @@ for x, dataY in triangles do
             data[2][1].Parent = wedgesFolder
             data[2][2].Parent = wedgesFolder
         end)
+        -- data.data
         if not success then warn(result) end
     end
 end
-local randX = math.random(1, #triangles)
-local randTrianglePickX = triangles[randX]
-local randY = math.random(1, #randTrianglePickX)
-local randTrianglePickY = randTrianglePickX[randY]
-local pos = (randTrianglePickY.data.vertices[1] + randTrianglePickY.data.vertices[2] + randTrianglePickY.data.vertices[3]) / 3
-local height = EgoMoose:getBarycentricHeight(randTrianglePickY.data.vertices[1], randTrianglePickY.data.vertices[2], randTrianglePickY.data.vertices[3], Vector2.new(pos.X, pos.Z))
-local newPart = robloxAdapter:newInstance("Part")
-robloxAdapter:setProperty(newPart, "Parent", workspace)
-robloxAdapter:setProperty(newPart, "Anchored", true)
-robloxAdapter:setProperty(newPart, "Size", Vector3.new(1, 1, 1))
-local dogCFrame = CFrame.new(Vector3.new(pos.X, height, pos.Z)) * triangles[randX][randY][1][1].CFrame.Rotation
-robloxAdapter:setProperty(newPart, "CFrame", dogCFrame)
 end
 
 -- FILE IS LOCKED
