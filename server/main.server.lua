@@ -19,9 +19,13 @@ end
 local wedgesFolder = robloxAdapter:newInstance("Folder")
 robloxAdapter:setProperty(wedgesFolder, "Parent", workspace)
 robloxAdapter:setProperty(wedgesFolder, "Name", "Wedges")
-
+-- lower ground is grass, higher ground is desert
 local function getColourAndMaterialFromHeight(height)
-    return Enum.Material.Sand, Color3.fromRGB(237, 201, 175)
+    if height < 0.1 then
+        return Enum.Material.Grass, Color3.fromRGB(105, 209, 105)
+    end
+    local secondaryAngs = math.random(-20, 10)
+    return Enum.Material.Sand, Color3.fromRGB(237 + secondaryAngs, 201 + math.random(0, 20), 175 + secondaryAngs)
 end
 
 local function operateOnThisTriangleInstance(data, thisTriangle)
