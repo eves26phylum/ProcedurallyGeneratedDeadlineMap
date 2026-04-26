@@ -130,6 +130,10 @@ function modules.translateTerrainOrientationForStructureBonding()
         local orientation = targetTriangle.Orientation
         return Vector3.new(orientation.X, orientation.Y, orientation.Z) + self.orientationSubtraction
     end
+    function translateTerrainOrientationForStructureBonding:GetSteepnessInDegrees(targetCFrame)
+        local angle = math.acos(targetCFrame.UpVector:Dot(Vector3.new(0, 1, 0)))
+        return math.deg(angle)
+    end
     return translateTerrainOrientationForStructureBonding
 end
 function modules.EgoMoose()
