@@ -217,10 +217,10 @@ do
     local partSize = 30
     local resolution = Vector2.new(math.round(2000 / partSize), math.round(2000 / partSize))
     local lacunarity = 2
-    local persistence = 0.5
+    local persistence = 0.2
     local octaves = 3
     local exaggeratedness = 20
-    local roughness = 3
+    local roughness = 2.5
     local offset = Vector2.new(math.random(1, 10e6), math.random(1, 10e6))
     local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / roughness, resolution, offset, exaggeratedness, lacunarity, persistence, octaves)
     local startTime = os.clock()
