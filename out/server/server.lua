@@ -110,47 +110,47 @@ function modules.PerlinNoise()
     return perlinNoise
 end
 function modules.EgoMoose()
-    -- sourced from EgoMoose
-    -- https://github.com/EgoMoose/Articles
-    -- saved me some time if i was gonna do it myself when I was searching on wedgeparts in roblox
-    local EgoMoose = {}
-    function EgoMoose:draw3dTriangle(a, b, c) -- roblox doesn't give us access to a plain triangle object or the render pipeline
-        local ab, ac, bc = b - a, c - a, c - b
-        local abd, acd, bcd = ab:Dot(ab), ac:Dot(ac), bc:Dot(bc)
+-- thanks from EgoMoose
+-- https://github.com/EgoMoose/Articles
+-- saved some time
+local EgoMoose = {}
+function EgoMoose:draw3dTriangle(a, b, c) -- roblox doesn't give us access to a plain triangle object or the render pipeline
+	local ab, ac, bc = b - a, c - a, c - b
+	local abd, acd, bcd = ab:Dot(ab), ac:Dot(ac), bc:Dot(bc)
 
-        if (abd > acd and abd > bcd) then
-            c, a = a, c
-        elseif (acd > bcd and acd > abd) then
-            a, b = b, a
-        end
+	if (abd > acd and abd > bcd) then
+		c, a = a, c
+	elseif (acd > bcd and acd > abd) then
+		a, b = b, a
+	end
 
-        ab, ac, bc = b - a, c - a, c - b
+	ab, ac, bc = b - a, c - a, c - b
 
-        local right = ac:Cross(ab).unit
-        local up = bc:Cross(right).unit
-        local back = bc.unit
+	local right = ac:Cross(ab).unit
+	local up = bc:Cross(right).unit
+	local back = bc.unit
 
-        local height = math.abs(ab:Dot(up))
+	local height = math.abs(ab:Dot(up))
 
-        return {Size = Vector3.new(0, height, math.abs(ab:Dot(back))), CFrame = CFrame.fromMatrix((a + b)/2, right, up, back)}, {Size = Vector3.new(0, height, math.abs(ac:Dot(back))), CFrame = CFrame.fromMatrix((a + c)/2, -right, up, -back)}
-    end
-    function EgoMoose:getBarycentricHeight(vertexA, vertexB, vertexC, samplePoint) -- Get the height of a point in a triangle by finding how much this point relates to each other 3 vertexes and get a lerped position within how much it goes into each vertex's position. Returns a height number, and the percentages (0 - 1) and doesn't need to return an x or z because your samplePoint already does that and is just saying where on the triangle you're supposed to get
-        local projectedDenominator = (vertexB.Z - vertexC.Z) * (vertexA.X - vertexC.X) + (vertexC.X - vertexB.X) * (vertexA.Z - vertexC.Z)
+	return {Size = Vector3.new(0, height, math.abs(ab:Dot(back))), CFrame = CFrame.fromMatrix((a + b)/2, right, up, back)}, {Size = Vector3.new(0, height, math.abs(ac:Dot(back))), CFrame = CFrame.fromMatrix((a + c)/2, -right, up, -back)}
+end
+function EgoMoose:getBarycentricHeight(vertexA, vertexB, vertexC, samplePoint) -- Get the height of a point in a triangle by finding how much this point relates to each other 3 vertexes and get a lerped position within how much it goes into each vertex's position. Returns a height number, and the percentages (0 - 1) and doesn't need to return an x or z because your samplePoint already does that and is just saying where on the triangle you're supposed to get
+    local projectedDenominator = (vertexB.Z - vertexC.Z) * (vertexA.X - vertexC.X) + (vertexC.X - vertexB.X) * (vertexA.Z - vertexC.Z)
 
-        if projectedDenominator == 0 then
-            return nil, 0, 0, 0
-        end
-
-        local weightA = ((vertexB.Z - vertexC.Z) * (samplePoint.X - vertexC.X) + (vertexC.X - vertexB.X) * (samplePoint.Y - vertexC.Z)) / projectedDenominator
-        local weightB = ((vertexC.Z - vertexA.Z) * (samplePoint.X - vertexC.X) + (vertexA.X - vertexC.X) * (samplePoint.Y - vertexC.Z)) / projectedDenominator
-        local weightC = 1 - weightA - weightB
-
-        local interpolatedHeight = weightA * vertexA.Y + weightB * vertexB.Y + weightC * vertexC.Y
-
-        return interpolatedHeight, weightA, weightB, weightC
+    if projectedDenominator == 0 then
+        return nil, 0, 0, 0
     end
 
-    return EgoMoose
+    local weightA = ((vertexB.Z - vertexC.Z) * (samplePoint.X - vertexC.X) + (vertexC.X - vertexB.X) * (samplePoint.Y - vertexC.Z)) / projectedDenominator
+    local weightB = ((vertexC.Z - vertexA.Z) * (samplePoint.X - vertexC.X) + (vertexA.X - vertexC.X) * (samplePoint.Y - vertexC.Z)) / projectedDenominator
+    local weightC = 1 - weightA - weightB
+
+    local interpolatedHeight = weightA * vertexA.Y + weightB * vertexB.Y + weightC * vertexC.Y
+
+    return interpolatedHeight, weightA, weightB, weightC
+end
+
+return EgoMoose
 end
 function modules.createTerrainFromVerticesUsingAdapter()
 local createTerrain = {}
@@ -169,7 +169,7 @@ function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
     return WedgeA, WedgeB
 end
 
-function createTerrain:createTrianglesFromData(data, resolution, partSize, offsetVector3, adapter, materialiseTriangle)
+function createTerrain:createTrianglesFromData(data, resolution, partSize, offsetVector3, adapter, materialiseTriangle, operateOnData)
     -- note: resolution can only be an integer. Being a float breaks the entire thing because it's an index
     local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
     local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
@@ -203,6 +203,8 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
                 bottomLeft,
                 bottomRight}, averageHeight=getFromXY(x, y)
             }}
+            if not operateOnData then continue end
+            operateOnData(wedges[x][y])
         end
     end
 
@@ -212,44 +214,44 @@ return createTerrain
 end
 
 do
-    local perlinNoise = import("PerlinNoise")
-    local createTerrain = import("createTerrainFromVerticesUsingAdapter")
-    local robloxAdapter = import("robloxAdapter")
-    local EgoMoose = import("EgoMoose")
-    local partSize = 50
-    local resolution = Vector2.new(math.round(10000 / partSize), math.round(10000 / partSize))
-    local lacunarity = 4
-    local persistence = 0.25
-    local octaves = 2
-    local exaggeratedness = 20
-    local roughness = 4
-    local POWER = 3
-    local offset = Vector2.new(math.random(1, 10e6), math.random(1, 10e6))
-    local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / roughness, resolution, offset, exaggeratedness, lacunarity, persistence, octaves, POWER)
-    local startTime = os.clock()
-    local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 0, 0), robloxAdapter)
-    local endTime = os.clock()
+local perlinNoise = import("PerlinNoise")
+local createTerrain = import("createTerrainFromVerticesUsingAdapter")
+local robloxAdapter = import("robloxAdapter")
+local EgoMoose = import("EgoMoose")
+local partSize = 100
+local resolution = Vector2.new(math.round(10000 / partSize), math.round(10000 / partSize))
+local lacunarity = 4
+local persistence = 0.25
+local octaves = 2
+local exaggeratedness = 20
+local roughness = 4
+local POWER = 3
+local offset = Vector2.new(math.random(1, 10e6), math.random(1, 10e6))
+local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) / roughness, resolution, offset, exaggeratedness, lacunarity, persistence, octaves, POWER)
+local startTime = os.clock()
+local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, Vector3.new(0, 0, 0), robloxAdapter)
+local endTime = os.clock()
 
-    print(startTime, endTime, endTime - startTime)
+print(startTime, endTime, endTime - startTime)
 
-    local wedgesFolder = robloxAdapter:findFirstChild(workspace, "Wedges")
-    if wedgesFolder then
-        robloxAdapter:destroy(wedgesFolder)
+local wedgesFolder = robloxAdapter:findFirstChild(workspace, "Wedges")
+if wedgesFolder then
+    robloxAdapter:destroy(wedgesFolder)
+end
+
+local wedgesFolder = robloxAdapter:newInstance("Folder")
+robloxAdapter:setProperty(wedgesFolder, "Parent", workspace)
+robloxAdapter:setProperty(wedgesFolder, "Name", "Wedges")
+
+for x, dataY in triangles do
+for y, data in dataY do
+        data[1][1].Parent = wedgesFolder
+        data[1][2].Parent = wedgesFolder
+        data[2][1].Parent = wedgesFolder
+        data[2][2].Parent = wedgesFolder
+        -- data.data
     end
-
-    local wedgesFolder = robloxAdapter:newInstance("Folder")
-    robloxAdapter:setProperty(wedgesFolder, "Parent", workspace)
-    robloxAdapter:setProperty(wedgesFolder, "Name", "Wedges")
-
-    for x, dataY in triangles do
-    for y, data in dataY do
-            data[1][1].Parent = wedgesFolder
-            data[1][2].Parent = wedgesFolder
-            data[2][1].Parent = wedgesFolder
-            data[2][2].Parent = wedgesFolder
-            -- data.data
-        end
-    end
+end
 end
 
 -- FILE IS LOCKED

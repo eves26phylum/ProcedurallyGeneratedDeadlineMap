@@ -1,6 +1,6 @@
--- sourced from EgoMoose
+-- thanks from EgoMoose
 -- https://github.com/EgoMoose/Articles
--- saved me some time if i was gonna do it myself when I was searching on wedgeparts in roblox
+-- saved some time
 local EgoMoose = {}
 function EgoMoose:draw3dTriangle(a, b, c) -- roblox doesn't give us access to a plain triangle object or the render pipeline
 	local ab, ac, bc = b - a, c - a, c - b

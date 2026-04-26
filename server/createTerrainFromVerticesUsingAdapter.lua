@@ -14,7 +14,7 @@ function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
     return WedgeA, WedgeB
 end
 
-function createTerrain:createTrianglesFromData(data, resolution, partSize, offsetVector3, adapter, materialiseTriangle)
+function createTerrain:createTrianglesFromData(data, resolution, partSize, offsetVector3, adapter, materialiseTriangle, operateOnData)
     -- note: resolution can only be an integer. Being a float breaks the entire thing because it's an index
     local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
     local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
@@ -48,6 +48,8 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, offse
                 bottomLeft,
                 bottomRight}, averageHeight=getFromXY(x, y)
             }}
+            if not operateOnData then continue end
+            operateOnData(wedges[x][y])
         end
     end
 
