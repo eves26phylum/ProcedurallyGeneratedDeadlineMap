@@ -15,6 +15,7 @@ function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
 end
 
 function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, adapter, materialiseTriangle)
+    -- note: resolution can only be an integer. Being a float breaks the entire thing because it's an index
     local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
     local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
     local minRaw = math.huge
@@ -46,7 +47,12 @@ function createTerrain:createTrianglesFromData(data, resolution, partSize, exagg
             local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3
             local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3
             if (not wedges[x]) then wedges[x] = {} end
-            wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, adapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, adapter)}}
+            wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, adapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, adapter)}, data={
+                vertices={topLeft,
+                topRight,
+                bottomLeft,
+                bottomRight}
+            }}
         end
     end
 

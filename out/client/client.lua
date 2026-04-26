@@ -55,7 +55,13 @@ function modules.robloxAdapter()
     return robloxAdapter
 end
 function modules.PerlinNoise()
-    local perlinNoise = {} 
+    local perlinNoise = {}
+    local function FUCKROBLOX(a)
+        if math.floor(a) == a then
+            return a + 0.001
+        end
+        return a
+    end
     function perlinNoise:generate(scale, resolution, offset)
         assert(scale, "scale is missing")
         assert(resolution, "resolution is missing")
@@ -65,7 +71,7 @@ function modules.PerlinNoise()
             for y = 0, resolution.Y do
                 local offsetX = x + offset.X
                 local offsetY = y + offset.Y
-                local computed_noise = math.noise(offsetX / scale, offsetY / scale)
+                local computed_noise = math.noise(FUCKROBLOX(offsetX / scale), FUCKROBLOX(offsetY / scale))
                 local clamped_noise = (computed_noise / 2 + 0.5)
                 table.insert(resultArray, clamped_noise)
             end
@@ -119,71 +125,80 @@ function modules.EgoMoose()
     return EgoMoose
 end
 function modules.createTerrainFromVerticesUsingAdapter()
-    local createTerrain = {}
-    local EgoMoose = import("EgoMoose")
-    local Util = import("Util")
-    local selfProp = import("selfProp")
+local createTerrain = {}
+local EgoMoose = import("EgoMoose")
+local Util = import("Util")
+local selfProp = import("selfProp")
 
-    function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
-        local AData, BData = EgoMoose:draw3dTriangle(a, b, c) -- a, b, c
-        local WedgeA = adapter:newInstance("WedgePart")
-        local WedgeB = adapter:newInstance("WedgePart")
-        WedgeA.Anchored = true
-        WedgeB.Anchored = true
-        Util:assign(WedgeA, AData, selfProp:returnFunctionWithIdentity(adapter.setProperty, adapter))
-        Util:assign(WedgeB, BData, selfProp:returnFunctionWithIdentity(adapter.setProperty, adapter))
-        return WedgeA, WedgeB
+function createTerrain:materialiseTriangle(a, b, c, EgoMoose, adapter)
+    local AData, BData = EgoMoose:draw3dTriangle(a, b, c) -- a, b, c
+    local WedgeA = adapter:newInstance("WedgePart")
+    local WedgeB = adapter:newInstance("WedgePart")
+    WedgeA.Anchored = true
+    WedgeB.Anchored = true
+    Util:assign(WedgeA, AData, selfProp:returnFunctionWithIdentity(adapter.setProperty, adapter))
+    Util:assign(WedgeB, BData, selfProp:returnFunctionWithIdentity(adapter.setProperty, adapter))
+    return WedgeA, WedgeB
+end
+
+function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, adapter, materialiseTriangle)
+    -- note: resolution can only be an integer. Being a float breaks the entire thing because it's an index
+    local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
+    local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
+    local minRaw = math.huge
+    for i = 1, #data do
+        if data[i] < minRaw then minRaw = data[i] end
     end
 
-    function createTerrain:createTrianglesFromData(data, resolution, partSize, exaggeratedness, offsetVector3, adapter, materialiseTriangle)
-        local triFunc = materialiseTriangle or selfProp:returnFunctionWithIdentity(self.materialiseTriangle, self)
-        local wedges = {} -- Record<number, Record<number, [Instance, Instance]>>
-        local minRaw = math.huge
-        for i = 1, #data do
-            if data[i] < minRaw then minRaw = data[i] end
-        end
-
-        local function getHeight(x, y)
-            local raw = data[x * (resolution.Y + 1) + y + 1]
-            return minRaw + (raw - minRaw) * exaggeratedness
-        end
-
-        local function multiplyVectorByPartSize(x, y, h)
-            return Vector3.new(x * partSize, h * partSize, y * partSize)
-        end
-
-        for x = 0, resolution.X - 1 do
-            for y = 0, resolution.Y - 1 do
-                local topLeftOffset = Vector2.new(0, 0)
-                local topRightOffset = Vector2.new(1, 0)
-                local bottomLeftOffset = Vector2.new(0, 1)
-                local bottomRightOffset = Vector2.new(1, 1)
-                local tLTotalH = getHeight(x + topLeftOffset.X, y + topLeftOffset.Y)
-                local tRTotalH = getHeight(x + topRightOffset.X, y + topRightOffset.Y)
-                local bLTotalH = getHeight(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
-                local bRTotalH = getHeight(x + bottomRightOffset.X, y + bottomRightOffset.Y)
-                local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3
-                local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3
-                local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3
-                local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3
-                if (not wedges[x]) then wedges[x] = {} end
-                wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, adapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, adapter)}}
-            end
-        end
-
-        return wedges
+    local function getHeight(x, y)
+        local raw = data[x * (resolution.Y + 1) + y + 1]
+        return minRaw + (raw - minRaw) * exaggeratedness
     end
-    return createTerrain
+
+    local function multiplyVectorByPartSize(x, y, h)
+        return Vector3.new(x * partSize, h * partSize, y * partSize)
+    end
+
+    for x = 0, resolution.X - 1 do
+        for y = 0, resolution.Y - 1 do
+            local topLeftOffset = Vector2.new(0, 0)
+            local topRightOffset = Vector2.new(1, 0)
+            local bottomLeftOffset = Vector2.new(0, 1)
+            local bottomRightOffset = Vector2.new(1, 1)
+            local tLTotalH = getHeight(x + topLeftOffset.X, y + topLeftOffset.Y)
+            local tRTotalH = getHeight(x + topRightOffset.X, y + topRightOffset.Y)
+            local bLTotalH = getHeight(x + bottomLeftOffset.X, y + bottomLeftOffset.Y)
+            local bRTotalH = getHeight(x + bottomRightOffset.X, y + bottomRightOffset.Y)
+            local topLeft = multiplyVectorByPartSize(x + topLeftOffset.X, y + topLeftOffset.X, tLTotalH) + offsetVector3
+            local topRight = multiplyVectorByPartSize(x + topRightOffset.X, y + topRightOffset.Y, tRTotalH) + offsetVector3
+            local bottomLeft = multiplyVectorByPartSize(x + bottomLeftOffset.X, y + bottomLeftOffset.Y, bLTotalH) + offsetVector3
+            local bottomRight = multiplyVectorByPartSize(x + bottomRightOffset.X, y + bottomRightOffset.Y, bRTotalH) + offsetVector3
+            if (not wedges[x]) then wedges[x] = {} end
+            wedges[x][y] = {{triFunc(topLeft, topRight, bottomLeft, EgoMoose, adapter)}, {triFunc(topRight, bottomRight, bottomLeft, EgoMoose, adapter)}, data={
+                vertices={topLeft,
+                topRight,
+                bottomLeft,
+                bottomRight}
+            }}
+        end
+    end
+
+    return wedges
+end
+return createTerrain
 end
 
 do
 local perlinNoise = import("PerlinNoise")
 local createTerrain = import("createTerrainFromVerticesUsingAdapter")
 local robloxAdapter = import("robloxAdapter")
-local resolution = Vector2.new(50, 50)
-local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) * 0.25, resolution)
+local EgoMoose = import("EgoMoose")
+local partSize = 30
+local resolution = Vector2.new(math.round(1000 / partSize), math.round(1000 / partSize))
+local maxxedResolution = math.max(resolution.X, resolution.Y)
+local noised = perlinNoise:generate(maxxedResolution * 0.25, resolution)
 local startTime = os.clock()
-local triangles = createTerrain:createTrianglesFromData(noised, resolution, 5, 20, Vector3.new(0, 0, 0), robloxAdapter)
+local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, 20, Vector3.new(0, 0, 0), robloxAdapter)
 local endTime = os.clock()
 print(startTime, endTime, endTime - startTime)
 local wedgesFolder = robloxAdapter:findFirstChild(workspace, "Wedges")
@@ -204,6 +219,14 @@ for x, dataY in triangles do
         if not success then warn(result) end
     end
 end
+local randTrianglePickX = triangles[math.random(1, #triangles)]
+local randTrianglePickY = randTrianglePickX[math.random(1, #randTrianglePickX)]
+local pos = Vector3.new(randTrianglePickY.data.vertices[1] + 0.5, 0, randTrianglePickY.data.vertices[1])
+local height = EgoMoose:getBarycentricHeight(randTrianglePickY.data.vertices[1], randTrianglePickY.data.vertices[2], randTrianglePickY.data.vertices[3], Vector2.new(pos.X, pos.Z))
+local newPart = robloxAdapter:newInstance("Part")
+robloxAdapter:setProperty(newPart, "Parent", workspace)
+robloxAdapter:setProperty(newPart, "Anchored", true)
+robloxAdapter:setProperty(newPart, "Position", Vector3.new(pos.X, height, pos.Z))
 end
 
 -- FILE IS LOCKED

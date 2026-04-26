@@ -1,10 +1,13 @@
 local perlinNoise = import("PerlinNoise")
 local createTerrain = import("createTerrainFromVerticesUsingAdapter")
 local robloxAdapter = import("robloxAdapter")
-local resolution = Vector2.new(50, 50)
-local noised = perlinNoise:generate(math.max(resolution.X, resolution.Y) * 5, resolution)
+local EgoMoose = import("EgoMoose")
+local partSize = 30
+local resolution = Vector2.new(math.round(1000 / partSize), math.round(1000 / partSize))
+local maxxedResolution = math.max(resolution.X, resolution.Y)
+local noised = perlinNoise:generate(maxxedResolution * 0.25, resolution)
 local startTime = os.clock()
-local triangles = createTerrain:createTrianglesFromData(noised, resolution, 5, 20, Vector3.new(0, 0, 0), robloxAdapter)
+local triangles = createTerrain:createTrianglesFromData(noised, resolution, partSize, 20, Vector3.new(0, 0, 0), robloxAdapter)
 local endTime = os.clock()
 print(startTime, endTime, endTime - startTime)
 local wedgesFolder = robloxAdapter:findFirstChild(workspace, "Wedges")
@@ -25,3 +28,11 @@ for x, dataY in triangles do
         if not success then warn(result) end
     end
 end
+local randTrianglePickX = triangles[math.random(1, #triangles)]
+local randTrianglePickY = randTrianglePickX[math.random(1, #randTrianglePickX)]
+local pos = Vector3.new(randTrianglePickY.data.vertices[1] + 0.5, 0, randTrianglePickY.data.vertices[1])
+local height = EgoMoose:getBarycentricHeight(randTrianglePickY.data.vertices[1], randTrianglePickY.data.vertices[2], randTrianglePickY.data.vertices[3], Vector2.new(pos.X, pos.Z))
+local newPart = robloxAdapter:newInstance("Part")
+robloxAdapter:setProperty(newPart, "Parent", workspace)
+robloxAdapter:setProperty(newPart, "Anchored", true)
+robloxAdapter:setProperty(newPart, "Position", Vector3.new(pos.X, height, pos.Z))
